@@ -13232,9 +13232,12 @@ do
     local emScroll = mkListScroll(secEmotes, 2, 320)
 
     local emoteTracks = {}
+        playingEmoteId = nil
+    local playingEmoteId = nil
     local function stopEmote()
         for _, tr in ipairs(emoteTracks) do pcall(function() tr:Stop(); tr:Destroy() end) end
         emoteTracks = {}
+        playingEmoteId = nil
     end
     -- Same resilience pattern as the reference script: try the built-in emote player first; if the
     -- Humanoid doesn't recognize the id yet, register it via HumanoidDescription:AddEmote and retry.
@@ -13257,7 +13260,12 @@ do
     -- catalog emote ids (raw hum:LoadAnimation on an emote id fails / gives a 0-length track, which is
     -- exactly what made emotes "stop working" when Loop / No-Emote-Stop were on).
     local function playEmoteById(name, id)
+        if playingEmoteId == id then
+            stopEmote()
+            return
+        end
         stopEmote()
+        playingEmoteId = id
         local c = LP.Character
         local hum = c and c:FindFirstChildOfClass("Humanoid")
         if not hum then Notify("Emotes", "No character", 2); return end
