@@ -443,6 +443,38 @@ local function updateTextSizes()
     end
 end
 
+
+local originalAvatarDescription = nil
+S._UpdateAvatarMods = function()
+    local char = LP.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+    
+    if not originalAvatarDescription then
+        local current = hum:GetAppliedDescription()
+        originalAvatarDescription = current and current:Clone() or Instance.new("HumanoidDescription")
+    end
+    
+    local desc = originalAvatarDescription:Clone()
+    
+    if S.FakeKorblox then
+        desc.RightLeg = 139607718
+    end
+    if S.FakeHeadless then
+        desc.Head = 134082579
+    end
+    
+    pcall(function() hum:ApplyDescription(desc) end)
+end
+
+LP.CharacterAdded:Connect(function()
+    task.delay(1.5, function()
+        if S.FakeKorblox or S.FakeHeadless then
+            S._UpdateAvatarMods()
+        end
+    end)
+end)
+
 local function updateGuiTransparency()
     -- Keep enough opacity for controls and notifications to remain readable even
     -- when an old or malformed config contains an out-of-range value.
