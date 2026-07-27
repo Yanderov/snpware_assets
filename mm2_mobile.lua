@@ -453,9 +453,13 @@ local function updateGuiTransparency()
     if SG then
         local main = SG:FindFirstChild("Main", true)
         if main then main.BackgroundTransparency = guiTrans end
+        local settings = SG:FindFirstChild("InertiaSettings", true)
+        if settings then settings.BackgroundTransparency = guiTrans end
         for _, obj in ipairs(SG:GetDescendants()) do
             if obj.Name == "NotificationCard" or obj.Name == "PinnedCard" or obj.Name == "Card" or obj.Name == "ProfileHeader" then
                 pcall(function() obj.BackgroundTransparency = math.clamp(guiTrans, 0, 0.95) end)
+            elseif obj.Name == "TBar" or obj.Name == "mHdr" or obj.Name == "TabList" or obj.Name == "grip" or obj.Name == "content" then
+                pcall(function() obj.BackgroundTransparency = guiTrans end)
             elseif obj:GetAttribute("HUDChromeFree") == true then
                 pcall(function() obj.BackgroundTransparency = 1 end)
             elseif obj.Name:sub(1, 4) == "HUD_" or obj.Name == "MobileHUD" then
@@ -1307,7 +1311,9 @@ local viewport = (workspace.CurrentCamera and workspace.CurrentCamera.ViewportSi
 local WW = MOBILE and math.floor(math.clamp(viewport.X * 0.86, 300, 540)) or math.max(560, math.min(980, math.floor(viewport.X - 36)))
 local WH = MOBILE and math.floor(math.clamp(viewport.Y * 0.56, 260, 430)) or math.max(430, math.min(640, math.floor(viewport.Y - 56)))
 local expandedSize = UDim2.fromOffset(WW, WH)
-Main = Instance.new("Frame")
+Main = Instance.new("ImageLabel")
+Main.ScaleType = Enum.ScaleType.Crop
+Main.ImageTransparency = 1
 Main.Name = "Main"
 Main.Visible = true
 Main.Parent = SG
@@ -1732,7 +1738,9 @@ pcall(function()
         S.ExecutorName = "Synapse"
     end
 end)
-local SettingsModal = Instance.new("Frame")
+local SettingsModal = Instance.new("ImageLabel")
+SettingsModal.ScaleType = Enum.ScaleType.Crop
+SettingsModal.ImageTransparency = 1
 SettingsModal.Name = "InertiaSettings"
 SettingsModal.Parent = SG
 -- This whole section lives in a do-block, so the local dies with it. Publish the
@@ -1997,11 +2005,42 @@ S._BuildTransparencySetting = function()
     end, 9, true)
 end
 
-mkModalLabel("Executor", 10)
+
+mkModalLabel("UI Wallpaper", 11)
+mkCycle(mScroll, "Wallpaper Style", {"None", "Space", "Abstract", "Anime", "Dark Cyber", "Vaporwave"}, "None", function(v)
+    S.UIWallpaper = v
+    local urls = {
+        ["Space"] = "rbxassetid://1045964490",
+        ["Abstract"] = "rbxassetid://14414605917",
+        ["Anime"] = "rbxassetid://6026569107",
+        ["Dark Cyber"] = "rbxassetid://7142907406",
+        ["Vaporwave"] = "rbxassetid://6880010959"
+    }
+    local main = SG:FindFirstChild("Main", true)
+    local settings = SG:FindFirstChild("InertiaSettings", true)
+    local url = urls[v] or ""
+    if main then 
+        main.Image = url
+        main.ImageTransparency = (v == "None") and 1 or (1 - (tonumber(S.UIWallpaperOpacity) or 0.2))
+    end
+    if settings then 
+        settings.Image = url
+        settings.ImageTransparency = (v == "None") and 1 or (1 - (tonumber(S.UIWallpaperOpacity) or 0.2))
+    end
+end, 12)
+mkSlider(mScroll, "Wallpaper Opacity (%)", 0, 100, 20, function(v)
+    S.UIWallpaperOpacity = v / 100
+    local main = SG:FindFirstChild("Main", true)
+    local settings = SG:FindFirstChild("InertiaSettings", true)
+    if main and main.Image ~= "" then main.ImageTransparency = 1 - (v / 100) end
+    if settings and settings.Image ~= "" then settings.ImageTransparency = 1 - (v / 100) end
+end, 13, true)
+
+mkModalLabel("Executor", 14)
 local executorValue = Instance.new("TextLabel")
 executorValue.Name = "ExecutorValue"
 executorValue.Parent = mScroll
-executorValue.LayoutOrder = 11
+executorValue.LayoutOrder = 15
 executorValue.Size = UDim2.new(1, 0, 0, 28)
 executorValue.BackgroundColor3 = T.Elev; pcall(function() executorValue:SetAttribute("ThemeColorRole_BackgroundColor3", "Elev") end)
 executorValue.BorderSizePixel = 0
@@ -3446,6 +3485,88 @@ if S._BuildTransparencySetting then
     S._BuildTransparencySetting = nil
 end
 
+
+-- ================== OPTION PICKER MODAL ==================
+local OptionPickerModal = Instance.new("Frame")
+OptionPickerModal.Name = "OptionPicker"
+OptionPickerModal.Parent = SG
+OptionPickerModal.Active = true
+OptionPickerModal.AnchorPoint = Vector2.new(0.5, 0.5)
+OptionPickerModal.Position = UDim2.new(0.5, 0, 0.5, 0)
+OptionPickerModal.Size = UDim2.fromOffset(300, 400)
+OptionPickerModal.BackgroundColor3 = T.Card; pcall(function() OptionPickerModal:SetAttribute("ThemeColorRole_BackgroundColor3", "Card") end)
+OptionPickerModal.BorderSizePixel = 0
+OptionPickerModal.ZIndex = 2000
+OptionPickerModal.Visible = false
+Corner(OptionPickerModal, 12)
+Stroke(OptionPickerModal, T.Bd2, 1.2, 0.4)
+
+local opHdr = Instance.new("TextLabel")
+opHdr.Parent = OptionPickerModal
+opHdr.BackgroundTransparency = 1
+opHdr.Position = UDim2.new(0, 16, 0, 10)
+opHdr.Size = UDim2.new(1, -32, 0, 24)
+opHdr.Font = FH
+opHdr.TextSize = 16
+opHdr.TextColor3 = T.White; pcall(function() opHdr:SetAttribute("ThemeColorRole_TextColor3", "White") end)
+opHdr.TextXAlignment = Enum.TextXAlignment.Left
+
+local opClose = Instance.new("TextButton")
+opClose.Parent = OptionPickerModal
+opClose.AnchorPoint = Vector2.new(1, 0)
+opClose.Position = UDim2.new(1, -10, 0, 10)
+opClose.Size = UDim2.new(0, 24, 0, 24)
+opClose.BackgroundTransparency = 1
+opClose.Text = "X"
+opClose.Font = FH
+opClose.TextSize = 14
+opClose.TextColor3 = T.Tx2; pcall(function() opClose:SetAttribute("ThemeColorRole_TextColor3", "Tx2") end)
+opClose.MouseButton1Click:Connect(function() OptionPickerModal.Visible = false; SFX.Off() end)
+
+local opScroll = Instance.new("ScrollingFrame")
+opScroll.Parent = OptionPickerModal
+opScroll.BackgroundTransparency = 1
+opScroll.BorderSizePixel = 0
+opScroll.Position = UDim2.new(0, 16, 0, 44)
+opScroll.Size = UDim2.new(1, -32, 1, -60)
+opScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+opScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+opScroll.ScrollBarThickness = 0
+opScroll.ZIndex = 2000
+local opList = Instance.new("UIListLayout")
+opList.Parent = opScroll
+opList.SortOrder = Enum.SortOrder.LayoutOrder
+opList.Padding = UDim.new(0, 4)
+
+S._OpenOptionPicker = function(title, options, currentIndex, callback)
+    opHdr.Text = "Select: " .. title
+    for _, c in ipairs(opScroll:GetChildren()) do if c:IsA("TextButton") then c:Destroy() end end
+    
+    for i, opt in ipairs(options) do
+        local btn = Instance.new("TextButton")
+        btn.Parent = opScroll
+        btn.Size = UDim2.new(1, 0, 0, 32)
+        btn.BackgroundColor3 = (i == currentIndex) and T.ActiveBg or T.Elev
+        pcall(function() btn:SetAttribute("ThemeColorRole_BackgroundColor3", (i == currentIndex) and "ActiveBg" or "Elev") end)
+        btn.BorderSizePixel = 0
+        btn.Font = FM
+        btn.TextSize = 14
+        btn.TextColor3 = (i == currentIndex) and T.White or T.Tx
+        pcall(function() btn:SetAttribute("ThemeColorRole_TextColor3", (i == currentIndex) and "White" or "Tx") end)
+        btn.Text = tostring(opt)
+        Corner(btn, 6)
+        
+        btn.MouseButton1Click:Connect(function()
+            SFX.Click()
+            OptionPickerModal.Visible = false
+            callback(i)
+        end)
+    end
+    OptionPickerModal.Visible = true
+    SFX.On()
+end
+-- =========================================================
+
 local function mkCycle(parent, label, options, default, callback, order)
     local row = Instance.new("Frame")
     row.Name = label
@@ -3487,8 +3608,15 @@ local function mkCycle(parent, label, options, default, callback, order)
     apply(false)
     btn.MouseButton1Click:Connect(function()
         SFX.Click()
-        idx = idx % #options + 1
-        apply(true)
+        if S._OpenOptionPicker then
+            S._OpenOptionPicker(label, options, idx, function(newIdx)
+                idx = newIdx
+                apply(true)
+            end)
+        else
+            idx = idx % #options + 1
+            apply(true)
+        end
     end)
     btn.MouseButton2Click:Connect(function()
         SFX.Click()
@@ -4052,14 +4180,13 @@ local secCustoms = mkSection(Pages.Visuals, "Custom Assets (GitHub)", 4)
         end
     end, 3)
     
-    mkSlider(secCustoms, "Custom Gun Sound ID", 0, #gunPaths, 0, function(v)
-        if v == 0 then
+    mkCycle(secCustoms, "Gun Sound", {"Game Default", "Custom 1 (Loud)", "Custom 2 (Suppressed)"}, "Game Default", function(v)
+        if v == "Game Default" then
             S.CustomGunSoundId = nil
-        else
-            task.spawn(function()
-                local soundPath = gunPaths[v]
-                S.CustomGunSoundId = fetchCustomAsset(soundPath, "gun_sounds")
-            end)
+        elseif v == "Custom 1 (Loud)" then
+            task.spawn(function() S.CustomGunSoundId = fetchCustomAsset(gunPaths[1] or "Loud.mp3", "gun_sounds") end)
+        elseif v == "Custom 2 (Suppressed)" then
+            task.spawn(function() S.CustomGunSoundId = fetchCustomAsset(gunPaths[2] or "Suppressed.mp3", "gun_sounds") end)
         end
     end, 4)
 
