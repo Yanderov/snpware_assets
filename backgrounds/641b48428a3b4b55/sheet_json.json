@@ -1,0 +1,12 @@
+{
+  "sizeX": 1022,
+  "sizeY": 546,
+  "frameSizeX": 146,
+  "frameSizeY": 91,
+  "columns": 7,
+  "rows": 6,
+  "totalFrames": 40,
+  "frameRate": 10.0,
+  "durationSec": 4.0,
+  "noGradient": true
+}

@@ -1,0 +1,12 @@
+{
+  "sizeX": 400,
+  "sizeY": 508,
+  "frameSizeX": 200,
+  "frameSizeY": 254,
+  "columns": 2,
+  "rows": 2,
+  "totalFrames": 4,
+  "frameRate": 10.0,
+  "durationSec": 0.4,
+  "noGradient": true
+}

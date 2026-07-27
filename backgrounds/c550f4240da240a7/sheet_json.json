@@ -1,0 +1,12 @@
+{
+  "sizeX": 768,
+  "sizeY": 432,
+  "frameSizeX": 768,
+  "frameSizeY": 432,
+  "columns": 1,
+  "rows": 1,
+  "totalFrames": 1,
+  "frameRate": 4.0,
+  "durationSec": 0.25,
+  "noGradient": true
+}
