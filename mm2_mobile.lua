@@ -13285,13 +13285,7 @@ do
     -- fully paginated, with no creator filter) — so the tab includes Roblox and community emotes,
     -- not just the handful you personally own.
     local secEmotes = mkSection(Pages.Player, "Emotes", 1)
-    mkToggle(secEmotes, "Emotes Walk (Freeze)", false, function(v) S.EmotesWalk = v end, 0.1)
-    mkSlider(secEmotes, "Emotes Speed", 0, 5, 1, function(v) 
-        S.EmotesSpeed = v 
-        if S.CurrentEmoteTrack then
-            pcall(function() S.CurrentEmoteTrack:AdjustSpeed(v) end)
-        end
-    end, 0.2)
+
     local emSearch = mkSearchBox(secEmotes, 1, "Search emotes...")
     local emScroll = mkListScroll(secEmotes, 2, 320)
 
